@@ -1,6 +1,15 @@
 #! /bin/bash
-# 
-# 0.3
+#
+# v 0.4
+
+#simple parsing, getopts to be done
+if ( (expr "$1" : "^-" > /dev/null ) && (expr "$1" : ".*D.*" > /dev/null ) ); then 
+  DEBUG=1;
+  shift;
+else
+  DEBUG=0;
+fi
+
 
 echo -n $(date) $1
 
@@ -15,33 +24,34 @@ else
   MAGECC_PROTO="--proto=tcp --port=4040";
 fi
 
+MAGECC_SQL_T='show tables;'
 
-# echo $MAGECC_USER $MAGECC_DB $MAGECC_PW  $MAGECC_HOST $MAGECC_PROTO
+MAGECC_TABLE=$(mysql -B -u$MAGECC_USER -p$MAGECC_PW $MAGECC_PROTO -e "$MAGECC_SQL_T" $MAGECC_DB | grep core_cache_option)
 
-MAGECC_SQL_0='show tables;'
-#MAGECC_SQL_0='select * from core_cache_option;'
-# mysql -u$MAGECC_USER -p$MAGECC_PW -e "$MAGECC_SQL_0" $MAGECC_PROTO $MAGECC_DB
+# Password not shown
+if (($DEBUG)); then echo; echo $MAGECC_USER $MAGECC_DB $MAGECC_HOST $MAGECC_PROTO $MAGECC_TABLE; fi
 
-MAGECC_RESULT0=$(mysql -B -u$MAGECC_USER -p$MAGECC_PW $MAGECC_PROTO -e "$MAGECC_SQL_0" $MAGECC_DB | grep core_cache_option)
-echo -n $MAGCC_RESULT0
+MAGECC_SQL_0='select * from '
+MAGECC_SQL_0+="$MAGECC_TABLE;"
 
-MAGECC_SQL_1="select count(code) from $MAGECC_RESULT0 where code!='0' and code!='1' and value='0';"
+
+if (($DEBUG)); then mysql -N -u$MAGECC_USER -p$MAGECC_PW -e "$MAGECC_SQL_0" $MAGECC_PROTO $MAGECC_DB; fi
+
+
+MAGECC_SQL_1="select count(code) from $MAGECC_TABLE where code!='0' and code!='1' and value='0';"
 # mysql -B -u$MAGECC_USER -p$MAGECC_PW -e "$MAGECC_SQL_1" $MAGECC_PROTO $MAGECC_DB
 
-MAGECC_RESULT1=$(mysql -B -u$MAGECC_USER -p$MAGECC_PW $MAGECC_PROTO -e "$MAGECC_SQL_1" $MAGECC_DB| tail -1)
+MAGECC_RESULT1=$(mysql -B -N -u$MAGECC_USER -p$MAGECC_PW $MAGECC_PROTO -e "$MAGECC_SQL_1" $MAGECC_DB)
 
 if (($MAGECC_RESULT1==0)); then
   echo " OK"; exit 0; 
 else
   echo -n " " $MAGECC_RESULT1 "caches not active: "; 
   # further action!
-  MAGECC_SQL_2="select code from $MAGECC_RESULT0 where code!='0' and code!='1' and value='0';";
-  MAGECC_RESULT2=$(mysql -B -u$MAGECC_USER -p$MAGECC_PW $MAGECC_PROTO -e "$MAGECC_SQL_2" $MAGECC_DB);
+  MAGECC_SQL_2="select code from $MAGECC_TABLE where code!='0' and code!='1' and value='0';";
+  MAGECC_RESULT2=$(mysql -B -N -u$MAGECC_USER -p$MAGECC_PW $MAGECC_PROTO -e "$MAGECC_SQL_2" $MAGECC_DB);
   echo $MAGECC_RESULT2;
   #evaluation to integer
   #exit MAGECC_RESULT1
-  exit 8;
+  exit 7;
 fi
-
-
-
