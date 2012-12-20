@@ -1,0 +1,57 @@
+# erste Version
+
+# Zum testen erst mal einen:
+
+cat /home/hyaluronan.ch/public_html/app/etc/local.xml | grep "<username>" | sed 's/.*CDATA\[\(.*\)\]\].*/\1/'
+
+cat /home/hyaluronan.ch/public_html/app/etc/local.xml | grep "<dbname>" | sed 's/.*CDATA\[\(.*\)\]\].*/\1/'
+
+cat /home/hyaluronan.ch/public_html/app/etc/local.xml | grep "<password>" | sed 's/.*CDATA\[\(.*\)\]\].*/\1/'
+
+# OK, passt. Erst mal nur globale Variable, nicht sonderlich sicher.
+# Verbesserung:  --defaults-extra-file=path
+# mit chmod 600 sicherstellen
+# [client]
+# user=...
+# password=...
+
+MAGECC_USER=$(cat /home/hyaluronan.ch/public_html/app/etc/local.xml | grep "<username>" | sed 's/.*CDATA\[\(.*\)\]\].*/\1/')
+
+MAGECC_DB=$(cat /home/hyaluronan.ch/public_html/app/etc/local.xml | grep "<dbname>" | sed 's/.*CDATA\[\(.*\)\]\].*/\1/')
+
+MAGECC_PW=$(cat /home/hyaluronan.ch/public_html/app/etc/local.xml | grep "<password>" | sed 's/.*CDATA\[\(.*\)\]\].*/\1/')
+
+echo $MAGECC_USER $MAGECC_DB $MAGECC_PW
+
+# OK, hier kommt ne Tuecke, den Host der DB herauszufinden. der steht nicht in local.xml
+
+# erst mal die lokalen
+
+mysql -u$MAGECC_USER -p$MAGECC_PW $MAGECC_DB
+
+# geht, script ?bergeben: 
+
+mysql -u$MAGECC_USER -p$MAGECC_PW -e 'select * from core_cache_option;' $MAGECC_DB
+
+MAGECC_SQL_0='select * from core_cache_option;'
+mysql -u$MAGECC_USER -p$MAGECC_PW -e "$MAGECC_SQL_0" $MAGECC_DB
+
+# bl?d, was sind denn das f?r Werte 0 und 1? M?ssen raus!
+
+MAGECC_SQL_1="select 8-sum(value) from core_cache_option where code!='0' and code!='1';"
+
+# Batch mode
+mysql -B -u$MAGECC_USER -p$MAGECC_PW -e "$MAGECC_SQL_1" $MAGECC_DB
+
+# OK, hier die 8 => Acht caches nicht aktiv. Hier sind sie:
+
+MAGECC_RESULT1=$(mysql -B -u$MAGECC_USER -p$MAGECC_PW -e "$MAGECC_SQL_1" $MAGECC_DB | tail -1)
+
+if (($MAG_RESULT1!=0)); then echo "some caches not active"; fi
+
+# further action!
+MAGECC_SQL_2="select code from core_cache_option where code!='0' and code!='1' and value='0';"
+
+MAGECC_RESULT2=$(mysql -B -u$MAGECC_USER -p$MAGECC_PW -e "$MAGECC_SQL_2" $MAGECC_DB)
+echo $MAGECC_RESULT2
+
