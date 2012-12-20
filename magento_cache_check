@@ -1,8 +1,10 @@
 #! /bin/bash
-
+#
 # Version 0.5 checking for Port
-
-
+# Version 0.6 solved a smaller problem for personal interest
+#
+#
+#
 #simple parsing, getopts to be done
 if ( (expr "$1" : "^-" > /dev/null ) && (expr "$1" : ".*D.*" > /dev/null ) ); then 
   DEBUG=1;
@@ -11,35 +13,38 @@ else
   DEBUG=0;
 fi
 
+
+
 # start with message
 echo -n $(date) $1
 
-# strip comments
+
+
+# first strip comments, then extract values
 MAGECC_XML=$(cat $1 | sed -e :a -re 's/<!--.*?-->//g;/<!--/N;//ba') 
-# newlines are removed :(, $1 has to be streamed several times, until better solution is found
-
-
-MAGECC_USER=$(cat $1 | sed -e :a -re 's/<!--.*?-->//g;/<!--/N;//ba' | grep "<username>" | sed 's/.*CDATA\[\(.*\)\]\].*/\1/')
-MAGECC_DB=$(  cat $1 | sed -e :a -re 's/<!--.*?-->//g;/<!--/N;//ba' | grep "<dbname>"   | sed 's/.*CDATA\[\(.*\)\]\].*/\1/')
-MAGECC_PW=$(  cat $1 | sed -e :a -re 's/<!--.*?-->//g;/<!--/N;//ba' | grep "<password>" | sed 's/.*CDATA\[\(.*\)\]\].*/\1/')
-MAGECC_HOST=$(cat $1 | sed -e :a -re 's/<!--.*?-->//g;/<!--/N;//ba' | grep "<host>"     | sed 's/.*CDATA\[\(.*\)\]\].*/\1/')
-MAGECC_PORT=$(cat $1 | sed -e :a -re 's/<!--.*?-->//g;/<!--/N;//ba' | grep "<port>"     | sed 's/.*CDATA\[\(.*\)\]\].*/\1/')
-
-# Password not shown
+MAGECC_USER=$(echo "$MAGECC_XML" | grep "<username>" | sed 's/.*CDATA\[\(.*\)\]\].*/\1/')
+  MAGECC_DB=$(echo "$MAGECC_XML" | grep "<dbname>"   | sed 's/.*CDATA\[\(.*\)\]\].*/\1/')
+  MAGECC_PW=$(echo "$MAGECC_XML" | grep "<password>" | sed 's/.*CDATA\[\(.*\)\]\].*/\1/')
+MAGECC_HOST=$(echo "$MAGECC_XML" | grep "<host>"     | sed 's/.*CDATA\[\(.*\)\]\].*/\1/')
+MAGECC_PORT=$(echo "$MAGECC_XML" | grep "<port>"     | sed 's/.*CDATA\[\(.*\)\]\].*/\1/')
+# password not shown
 if (($DEBUG)); then echo; echo -n $MAGECC_USER $MAGECC_DB $MAGECC_HOST $MAGECC_PORT; fi
 
 
+
+
+# check for proper connection
 if [[ 4040 == $MAGECC_PORT ]]; then
   MAGECC_PROTO="--proto=tcp --port=4040";
 else
   MAGECC_PROTO="";
 fi
 if (($DEBUG)); then echo -n " " $MAGECC_PROTO; fi
-
-
 # check for access
 mysql -B -u$MAGECC_USER -p$MAGECC_PW $MAGECC_PROTO -e "$MAGECC_SQL_T" $MAGECC_DB &> /dev/null
 if (( $? )); then echo " Access denied"; exit 1; fi
+
+
 
 
 # get correct table name
@@ -50,10 +55,14 @@ if (($DEBUG)); then echo $MAGECC_TABLE; fi
 if [[ "" == $MAGECC_TABLE ]]; then echo " No Cache"; exit 0; fi
 
 
+
+
 # DEBUG: show table content
 MAGECC_SQL_0='select * from '
 MAGECC_SQL_0+="$MAGECC_TABLE;"
 if (($DEBUG)); then mysql -N -u$MAGECC_USER -p$MAGECC_PW -e "$MAGECC_SQL_0" $MAGECC_PROTO $MAGECC_DB; fi
+
+
 
 
 # get number of inactive caches
