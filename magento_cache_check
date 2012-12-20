@@ -1,6 +1,6 @@
-# 0.2
-
 #! /bin/bash
+# 
+# 0.3
 
 echo -n $(date) $1
 
@@ -18,25 +18,30 @@ fi
 
 # echo $MAGECC_USER $MAGECC_DB $MAGECC_PW  $MAGECC_HOST $MAGECC_PROTO
 
-MAGECC_SQL_0='select * from core_cache_option;'
+MAGECC_SQL_0='show tables;'
+#MAGECC_SQL_0='select * from core_cache_option;'
 # mysql -u$MAGECC_USER -p$MAGECC_PW -e "$MAGECC_SQL_0" $MAGECC_PROTO $MAGECC_DB
 
-MAGECC_SQL_1="select count(code) from core_cache_option where code!='0' and code!='1' and value='0';"
+MAGECC_RESULT0=$(mysql -B -u$MAGECC_USER -p$MAGECC_PW $MAGECC_PROTO -e "$MAGECC_SQL_0" $MAGECC_DB | grep core_cache_option)
+echo -n $MAGCC_RESULT0
+
+MAGECC_SQL_1="select count(code) from $MAGECC_RESULT0 where code!='0' and code!='1' and value='0';"
 # mysql -B -u$MAGECC_USER -p$MAGECC_PW -e "$MAGECC_SQL_1" $MAGECC_PROTO $MAGECC_DB
 
-MAGECC_RESULT0=$(mysql -B -u$MAGECC_USER -p$MAGECC_PW $MAGECC_PROTO -e "$MAGECC_SQL_1" $MAGECC_DB)
-MAGECC_RESULT1=$(mysql -B -u$MAGECC_USER -p$MAGECC_PW $MAGECC_PROTO -e "$MAGECC_SQL_1" $MAGECC_DB | tail -1)
+MAGECC_RESULT1=$(mysql -B -u$MAGECC_USER -p$MAGECC_PW $MAGECC_PROTO -e "$MAGECC_SQL_1" $MAGECC_DB| tail -1)
 
 if (($MAGECC_RESULT1==0)); then
   echo " OK"; exit 0; 
 else
   echo -n " " $MAGECC_RESULT1 "caches not active: "; 
   # further action!
-  MAGECC_SQL_2="select code from core_cache_option where code!='0' and code!='1' and value='0';";
+  MAGECC_SQL_2="select code from $MAGECC_RESULT0 where code!='0' and code!='1' and value='0';";
   MAGECC_RESULT2=$(mysql -B -u$MAGECC_USER -p$MAGECC_PW $MAGECC_PROTO -e "$MAGECC_SQL_2" $MAGECC_DB);
   echo $MAGECC_RESULT2;
   #evaluation to integer
   #exit MAGECC_RESULT1
   exit 8;
 fi
+
+
 
