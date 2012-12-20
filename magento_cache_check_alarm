@@ -1,0 +1,9 @@
+#!/bin/bash
+
+cat /root/local.xml.list | grep -Ev -e "^[ ]*#" | xargs -l /root/magento_cache_check > /root/magento_cache_check.log 
+
+ALARM=$(cat /root/magento_cache_check.log | /bin/grep "caches not active" | wc -l)
+if (( $ALARM > 0)) ; then 
+  cat - /root/magento_cache_check.log <<<"Subject: Magento Cache Check" | /usr/sbin/sendmail -r michael.pfiz@openstream.ch $1;
+fi
+
