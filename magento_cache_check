@@ -48,7 +48,7 @@ mysql -B -u$MAGECC_USER -p$MAGECC_PW $MAGECC_PROTO -e "$MAGECC_SQL_T" $MAGECC_DB
 if (( $? )); then 
 	echo " Access denied"; exit 1; 
 else   
-   echo "Connection to database is OK";
+   if (($DEBUG)); then echo "Connection to database is OK"; fi
 fi
 
 
@@ -74,7 +74,7 @@ MAGECC_COUNT=`mysql -B -N -u$MAGECC_USER -p$MAGECC_PW -e "$MAGECC_SQL_0" $MAGECC
 if (($DEBUG)); then echo "Number of entries in table \"$MAGECC_TABLE\": $MAGECC_COUNT"; fi
 
 if [ $MAGECC_COUNT -le 4 ] ; then
-   echo "Only $MAGECC_COUNT entries found in table \"$MAGECC_TABLE\"; Database broken??!"
+   echo " Only $MAGECC_COUNT entries found in table \"$MAGECC_TABLE\"; Database broken??! caches not active?"
    exit 13;
 fi
 
@@ -84,7 +84,7 @@ MAGECC_SQL_1="select count(code) from $MAGECC_TABLE where code!='0' and code!='1
 # mysql -B -u$MAGECC_USER -p$MAGECC_PW -e "$MAGECC_SQL_1" $MAGECC_PROTO $MAGECC_DB
 MAGECC_RESULT1=$(mysql -B -N -u$MAGECC_USER -p$MAGECC_PW $MAGECC_PROTO -e "$MAGECC_SQL_1" $MAGECC_DB)
 if (($MAGECC_RESULT1==0)); then
-  echo "OK"; exit 0; 
+  echo " OK"; exit 0; 
 else
   echo -n " " $MAGECC_RESULT1 "caches not active: "; 
   # further action!
